@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request
 import requests
 from shapely.geometry import shape, mapping
 import geojson
+import os
 
 app = Flask(__name__)
 
@@ -38,4 +39,5 @@ def get_aup():
     return jsonify(feature_collection)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))  # domyślnie 5000, ale Render poda PORT
+    app.run(host="0.0.0.0", port=port)
