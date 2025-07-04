@@ -10,15 +10,21 @@ PAZP_API = "https://airspace.pansa.pl/api/public/aup"
 
 @app.route("/aup", methods=["GET"])
 def get_aup():
-    date = request.args.get("date")  # format YYYY-MM-DD
-    if not date:
-        return jsonify({"error": "Missing 'date' param"}), 400
+    date = request.args.get("date")  # może być None
 
-    url = f"{PAZP_API}/{date}"
+    if date:
+        url = f"{PAZP_API}/{date}"
+    else:
+        url = PAZP_API  # bez daty – API zwraca dane na dziś
+
     resp = requests.get(url)
 
     if resp.status_code != 200:
-        return jsonify({"error": "PAŻP API error"}), 500
+        return jsonify({
+            "error": "PAŻP API error",
+            "status": resp.status_code,
+            "url": url
+        }), 500
 
     raw_data = resp.json()
     features = []
@@ -35,8 +41,7 @@ def get_aup():
         feature = geojson.Feature(geometry=mapping(geometry), properties=props)
         features.append(feature)
 
-    feature_collection = geojson.FeatureCollection(features)
-    return jsonify(feature_collection)
+    return jsonify(geojson.FeatureCollection(features))
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))  # domyślnie 5000, ale Render poda PORT
